@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900 font-sans antialiased selection:bg-blue-600 selection:text-white;
+  }
+}
+
+.gov-card {
+  @apply bg-white rounded-xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all duration-200;
+}
+
+.gov-badge {
+  @apply px-2.5 py-1 rounded-full text-xs font-semibold inline-flex items-center gap-1.5;
+}
+
+.gov-btn-primary {
+  @apply bg-blue-700 hover:bg-blue-800 text-white font-medium px-4 py-2 rounded-lg shadow-sm hover:shadow transition-all duration-150 flex items-center justify-center gap-2 disabled:opacity-50;
+}
+
+.gov-btn-secondary {
+  @apply bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-medium px-4 py-2 rounded-lg transition-all duration-150 flex items-center justify-center gap-2;
+}
+
+.gov-btn-accent {
+  @apply bg-amber-500 hover:bg-amber-600 text-white font-medium px-4 py-2 rounded-lg shadow-sm transition-all duration-150 flex items-center justify-center gap-2;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
