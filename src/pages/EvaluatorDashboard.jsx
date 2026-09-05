@@ -12,9 +12,10 @@ import {
   Award,
   Layers
 } from 'lucide-react';
+import { api } from '../services/api';
 
 export default function EvaluatorDashboard({ proposals, onNavigate }) {
-  const proposalList = proposals || [
+  const proposalList = proposals && proposals.length > 0 ? proposals : [
     {
       id: 'prop-1',
       startupName: 'EcoVision AI',
@@ -62,9 +63,20 @@ export default function EvaluatorDashboard({ proposals, onNavigate }) {
 
   const totalScore = scores.technicalSolution + scores.innovation + scores.cost + scores.scalability + scores.teamCapability + scores.pilotPlan;
 
-  const handleSubmitEvaluation = (e) => {
+  const handleSubmitEvaluation = async (e) => {
     e.preventDefault();
     setSubmitted(true);
+    try {
+      await api.submitEvaluation({
+        proposalId: proposalList[0]?.id || 'prop-1',
+        evaluatorName: 'Dr. K. S. Ramanathan (IISc)',
+        scores,
+        totalScore,
+        evaluatorComments
+      });
+    } catch (err) {
+      console.warn('Evaluation submission fallback:', err);
+    }
   };
 
   return (

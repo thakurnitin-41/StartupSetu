@@ -1,0 +1,17 @@
+<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="2" y="2" width="36" height="36" rx="10" fill="url(#logo-grad)" />
+  <path d="M10 27 C 10 18, 30 18, 30 27" stroke="white" stroke-width="3" stroke-linecap="round" />
+  <line x1="15" y1="27" x2="15" y2="21" stroke="white" stroke-width="2.5" stroke-linecap="round" />
+  <line x1="25" y1="27" x2="25" y2="21" stroke="white" stroke-width="2.5" stroke-linecap="round" />
+  <circle cx="20" cy="12" r="3" fill="#F59E0B" />
+  <circle cx="10" cy="27" r="2.5" fill="#60A5FA" />
+  <circle cx="30" cy="27" r="2.5" fill="#34D399" />
+  <line x1="10" y1="27" x2="20" y2="12" stroke="white" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.8" />
+  <line x1="30" y1="27" x2="20" y2="12" stroke="white" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.8" />
+  <defs>
+    <linearGradient id="logo-grad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0B2545" />
+      <stop offset="1" stop-color="#1E40AF" />
+    </linearGradient>
+  </defs>
+</svg>

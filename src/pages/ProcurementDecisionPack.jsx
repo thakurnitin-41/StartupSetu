@@ -8,10 +8,11 @@ import {
   ShieldCheck, 
   TrendingUp, 
   HelpCircle, 
-  XCircle,
-  Award,
-  ArrowRight
+  XCircle, 
+  Award, 
+  ArrowRight 
 } from 'lucide-react';
+import { api } from '../services/api';
 
 export default function ProcurementDecisionPack({ pilots, onNavigate }) {
   const [decisionExecuted, setDecisionExecuted] = useState(null); // 'Recommended for Scale', 'Request More Evidence', 'Do Not Scale'
@@ -36,8 +37,23 @@ export default function ProcurementDecisionPack({ pilots, onNavigate }) {
     aiRecommendationReasoning: 'Startup EcoVision AI successfully exceeded target KPIs with an overall pilot score of 91% across all milestone phases. All 3 submitted evidence assets have been independently verified with cryptographic tamper checks. Recommended for scale-up procurement.'
   };
 
-  const handleExecuteDecision = (type) => {
+  const handleExecuteDecision = async (type) => {
     setDecisionExecuted(type);
+    try {
+      await api.executeDecision({
+        pilotId: 'pil-1',
+        startupName: decisionPackData.startupName,
+        challengeTitle: decisionPackData.challengeTitle,
+        humanOfficerDecision: type,
+        officerNotes,
+        overallPilotScore: 91,
+        kpiAchievement: '94.2%',
+        departmentName: decisionPackData.departmentName,
+        decidedBy: 'Rajesh Verma (Joint Secretary)'
+      });
+    } catch (e) {
+      console.warn('Decision execution fallback:', e);
+    }
     if (type === 'Recommended for Scale') {
       alert('Official Decision Recorded! Solution published to the Scale Engine catalog.');
     }

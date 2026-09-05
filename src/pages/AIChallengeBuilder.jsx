@@ -15,6 +15,7 @@ import {
   IndianRupee,
   ShieldCheck
 } from 'lucide-react';
+import { api } from '../services/api';
 
 export default function AIChallengeBuilder({ onPublishChallenge, onNavigate }) {
   const [naturalLanguageInput, setNaturalLanguageInput] = useState('');
@@ -49,12 +50,7 @@ export default function AIChallengeBuilder({ onPublishChallenge, onNavigate }) {
     setIsGenerating(true);
 
     try {
-      const res = await fetch('/api/ai/generate-challenge', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ problemStatement: naturalLanguageInput })
-      });
-      const data = await res.json();
+      const data = await api.generateAIChallenge(naturalLanguageInput);
       setChallengeData(data);
     } catch (err) {
       console.error('Error generating AI challenge:', err);

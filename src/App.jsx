@@ -20,6 +20,8 @@ import ScaleEngine from './pages/ScaleEngine';
 import AuditTrail from './pages/AuditTrail';
 import AdminDashboard from './pages/AdminDashboard';
 import StartupProfile from './pages/StartupProfile';
+import PaymentsPage from './pages/PaymentsPage';
+import { api } from './services/api';
 
 export default function App() {
   // Start with unauthenticated state so the user lands directly on the Login Page
@@ -36,6 +38,7 @@ export default function App() {
   const [kpis, setKpis] = useState([]);
   const [evidenceList, setEvidenceList] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
+  const [scaleItems, setScaleItems] = useState([]);
 
   useEffect(() => {
     fetchInitialData();
@@ -43,37 +46,20 @@ export default function App() {
 
   const fetchInitialData = async () => {
     try {
-      const [chRes, stRes, prRes, piRes, kpRes, evRes, auRes] = await Promise.all([
-        fetch('/api/challenges'),
-        fetch('/api/startups'),
-        fetch('/api/proposals'),
-        fetch('/api/pilots'),
-        fetch('/api/kpis'),
-        fetch('/api/evidence'),
-        fetch('/api/audit-logs')
-      ]);
-
-      const [chData, stData, prData, piData, kpData, evData, auData] = await Promise.all([
-        chRes.json(),
-        stRes.json(),
-        prRes.json(),
-        piRes.json(),
-        kpRes.json(),
-        evRes.json(),
-        auRes.json()
-      ]);
-
-      setChallenges(chData);
-      setStartups(stData);
-      setProposals(prData);
-      setPilots(piData);
-      setKpis(kpData);
-      setEvidenceList(evData);
-      setAuditLogs(auData);
+      const data = await api.getInitialData();
+      setChallenges(data.challenges || []);
+      setStartups(data.startups || []);
+      setProposals(data.proposals || []);
+      setPilots(data.pilots || []);
+      setKpis(data.kpis || []);
+      setEvidenceList(data.evidence || []);
+      setAuditLogs(data.auditLogs || []);
+      setScaleItems(data.scaleItems || []);
     } catch (err) {
       console.error('Error loading API data:', err);
     }
   };
+
 
   const handleRoleChange = (newRole, email, targetTabOverride = null) => {
     const roleAvatars = {
@@ -104,16 +90,29 @@ export default function App() {
 
   const handlePublishChallenge = async (newChallengeData) => {
     try {
-      const res = await fetch('/api/challenges', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newChallengeData)
-      });
-      const published = await res.json();
-      setChallenges([published, ...challenges]);
+      const published = await api.publishChallenge(newChallengeData);
+      setChallenges(prev => [published, ...prev]);
+      const data = await api.getInitialData();
+      setAuditLogs(data.auditLogs || []);
     } catch (err) {
       console.error('Error publishing challenge:', err);
     }
+  };
+
+  const handleSubmitProposal = async (proposalData) => {
+    try {
+      const newProp = await api.submitProposal(proposalData);
+      setProposals(prev => [newProp, ...prev]);
+      const data = await api.getInitialData();
+      setChallenges(data.challenges || []);
+      setAuditLogs(data.auditLogs || []);
+    } catch (err) {
+      console.error('Error submitting proposal:', err);
+    }
+  };
+
+  const handleSelectStartupForPilot = (matchedStartup) => {
+    setActiveTab('pilots');
   };
 
   const handleExecuteDemoStep = (roleToSet, targetTab) => {
@@ -244,6 +243,7 @@ export default function App() {
             challenges={challenges} 
             selectedChallengeId={selectedChallengeId} 
             onNavigate={setActiveTab} 
+            onSelectStartupForPilot={handleSelectStartupForPilot}
           />
         );
 
@@ -254,6 +254,7 @@ export default function App() {
             challenges={challenges} 
             selectedChallengeId={selectedChallengeId} 
             onNavigate={setActiveTab} 
+            onSubmitProposalSuccess={handleSubmitProposal}
           />
         );
 
@@ -277,14 +278,17 @@ export default function App() {
         return <ProcurementDecisionPack pilots={pilots} onNavigate={setActiveTab} />;
 
       case 'scale-engine':
-        return <ScaleEngine onNavigate={setActiveTab} />;
+        return <ScaleEngine scaleItems={scaleItems} onNavigate={setActiveTab} />;
+
+      case 'payments':
+        return <PaymentsPage pilots={pilots} onNavigate={setActiveTab} />;
 
       case 'audit-trail':
         return <AuditTrail auditLogs={auditLogs} />;
 
       case 'startups':
       case 'startup-profile':
-        return <StartupProfile onNavigate={setActiveTab} />;
+        return <StartupProfile startup={startups && startups.length > 0 ? startups[0] : null} onNavigate={setActiveTab} />;
 
       default:
         return <GovDashboard challenges={challenges} pilots={pilots} onNavigate={setActiveTab} />;

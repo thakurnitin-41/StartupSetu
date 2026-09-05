@@ -12,6 +12,7 @@ import {
   TrendingUp,
   FileCheck
 } from 'lucide-react';
+import { api } from '../services/api';
 
 export default function PilotManagement({ pilots, onNavigate }) {
   const pilot = pilots && pilots.length > 0 ? pilots[0] : {
@@ -47,7 +48,7 @@ export default function PilotManagement({ pilots, onNavigate }) {
     '6. Final Review'
   ];
 
-  const handleReleasePayment = (mId) => {
+  const handleReleasePayment = async (mId) => {
     const updated = milestones.map(m => {
       if (m.id === mId) {
         return {
@@ -60,6 +61,11 @@ export default function PilotManagement({ pilots, onNavigate }) {
       return m;
     });
     setMilestones(updated);
+    try {
+      await api.releaseMilestone(pilot.id || 'pil-1', mId, 'Rajesh Verma (Officer Authorized)');
+    } catch (e) {
+      console.warn('Milestone release fallback:', e);
+    }
     alert(`Milestone payout authorized and released to ${pilot.startupName}!`);
   };
 

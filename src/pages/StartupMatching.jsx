@@ -21,6 +21,7 @@ import {
   ResponsiveContainer, 
   Cell 
 } from 'recharts';
+import { api } from '../services/api';
 
 export default function StartupMatching({ 
   challenges, 
@@ -40,12 +41,7 @@ export default function StartupMatching({
   const fetchMatches = async (cId) => {
     setLoading(true);
     try {
-      const res = await fetch('/api/ai/match-startups', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ challengeId: cId })
-      });
-      const data = await res.json();
+      const data = await api.matchStartups(cId);
       setMatchData(data);
       if (data.matches && data.matches.length > 0) {
         setSelectedMatch(data.matches[0]);

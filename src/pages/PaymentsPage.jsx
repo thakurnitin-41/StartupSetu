@@ -1,7 +1,7 @@
 import React from 'react';
 import { CreditCard, CheckCircle2, Clock, IndianRupee, Building2, ShieldCheck, Download } from 'lucide-react';
 
-export default function PaymentsPage({ pilots }) {
+export default function PaymentsPage({ pilots, onNavigate }) {
   const pilot = pilots && pilots.length > 0 ? pilots[0] : {
     pilotNumber: 'PIL-BHP-2026-01',
     startupName: 'EcoVision AI',

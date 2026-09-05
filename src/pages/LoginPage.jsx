@@ -227,13 +227,19 @@ export default function LoginPage({ onLoginSuccess, onNavigate, initialMode = 'l
         body: JSON.stringify(bodyPayload)
       });
 
-      const data = await res.json();
-      setIsLoading(false);
-
-      if (data.success || data.user) {
-        onLoginSuccess(selectedRole?.roleName || 'Government Officer', email, selectedRole?.targetTab || 'gov-dashboard');
+      const contentType = res.headers.get('content-type') || '';
+      if (res.ok && contentType.includes('application/json')) {
+        const data = await res.json();
+        setIsLoading(false);
+        if (data.success || data.user) {
+          onLoginSuccess(selectedRole?.roleName || 'Government Officer', email, selectedRole?.targetTab || 'gov-dashboard');
+        } else {
+          setErrorMessage(data.error || 'Authentication failed. Please check your credentials.');
+        }
       } else {
-        setErrorMessage(data.error || 'Authentication failed. Please check your credentials.');
+        // Static hosting mode (e.g. GitHub Pages) without Node.js backend
+        setIsLoading(false);
+        onLoginSuccess(selectedRole?.roleName || 'Government Officer', email, selectedRole?.targetTab || 'gov-dashboard');
       }
     } catch (err) {
       setIsLoading(false);

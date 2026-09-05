@@ -11,10 +11,11 @@ import {
   AlertCircle,
   FileText
 } from 'lucide-react';
+import { api } from '../services/api';
 
 export default function ValidatorDashboard({ pilots, evidenceList, onNavigate }) {
   const [evidenceItems, setEvidenceItems] = useState(
-    evidenceList || [
+    evidenceList && evidenceList.length > 0 ? evidenceList : [
       { id: 'evid-1', title: 'Bhopal Sanitation Telemetry Log Stream', type: 'System Logs', status: 'Verified', notes: 'AWS IoT log checksum matched.' },
       { id: 'evid-2', title: 'Route Completion Audit Report', type: 'KPI Reports', status: 'Verified', notes: 'Sample verification passed.' },
       { id: 'evid-3', title: 'On-Ground Bin Dumping Dataset', type: 'Field Test Results', status: 'Pending Review', notes: 'Physical inspection completed.' }
@@ -27,14 +28,33 @@ export default function ValidatorDashboard({ pilots, evidenceList, onNavigate })
 
   const [signedOff, setSignedOff] = useState(false);
 
-  const handleUpdateStatus = (id, newStatus) => {
+  const handleUpdateStatus = async (id, newStatus) => {
     const updated = evidenceItems.map(item => item.id === id ? { ...item, status: newStatus } : item);
     setEvidenceItems(updated);
+    try {
+      await api.updateEvidence(id, {
+        status: newStatus,
+        validatorName: 'Dr. Meera Nambiar (QCI)',
+        verificationNotes: newStatus === 'Verified' ? 'Independently verified and approved.' : 'Rejected upon audit inspection.'
+      });
+    } catch (e) {
+      console.warn('Evidence update fallback:', e);
+    }
   };
 
-  const handleSignOffValidation = (e) => {
+  const handleSignOffValidation = async (e) => {
     e.preventDefault();
     setSignedOff(true);
+    try {
+      await api.signOffValidation({
+        pilotId: pilots && pilots.length > 0 ? pilots[0].id : 'pil-1',
+        validatorName: 'Dr. Meera Nambiar (QCI)',
+        auditRemarks: validationComments,
+        status: 'Approved'
+      });
+    } catch (err) {
+      console.warn('Signoff fallback:', err);
+    }
   };
 
   return (
