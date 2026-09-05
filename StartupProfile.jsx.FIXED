@@ -1,0 +1,264 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  Building2, 
+  CheckCircle2, 
+  Award, 
+  Users, 
+  MapPin, 
+  Globe, 
+  Calendar, 
+  ShieldCheck, 
+  FileText, 
+  ExternalLink,
+  Layers,
+  Activity,
+  AlertCircle
+} from 'lucide-react';
+
+// 🟢 Database of startups mapped by email
+const STARTUP_DATABASE = {
+  'ananya@ecovision.ai': {
+    id: 'st-1',
+    name: 'EcoVision AI',
+    logo: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100',
+    description: 'Computer vision and IoT solution for urban waste tracking, route optimization, and vehicle monitoring.',
+    technology: 'Computer Vision, IoT Sensors, Edge AI, Route Optimization Algorithms',
+    sector: 'Smart City',
+    foundedYear: 2021,
+    teamSize: 28,
+    verified: true,
+    dpiitRegistered: 'DPIIT-89412',
+    location: 'Bengaluru, KA',
+    deployments: 4,
+    certifications: ['ISO 27001', 'CMMI Level 3', 'STQC Certified'],
+    products: ['TrashCam Edge', 'RouteOptima Gov', 'BinSense Telemetry'],
+    caseStudies: ['Indore Municipal Sanitation Smart Monitoring (2023)', 'Surat Waste Fleet AI Tracking'],
+    pilotHistoryScore: 92,
+    website: 'https://ecovision.ai'
+  },
+  'startup@startup.ai': {
+    id: 'st-2',
+    name: 'Generic Startup Inc',
+    logo: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=100',
+    description: 'Innovative technology solutions for modern government challenges.',
+    technology: 'Cloud Computing, Machine Learning, API Development',
+    sector: 'Technology',
+    foundedYear: 2022,
+    teamSize: 15,
+    verified: true,
+    dpiitRegistered: 'DPIIT-92234',
+    location: 'Mumbai, MH',
+    deployments: 2,
+    certifications: ['ISO 27001', 'SOC 2 Certified'],
+    products: ['Platform Core', 'Analytics Dashboard', 'Integration Hub'],
+    caseStudies: ['Initial Market Entry', 'First Government Pilot'],
+    pilotHistoryScore: 85,
+    website: 'https://genericstartup.com'
+  },
+  'sample@techstartup.com': {
+    id: 'st-3',
+    name: 'TechStartup Labs',
+    logo: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=100',
+    description: 'Advanced AI and ML solutions for public sector innovation.',
+    technology: 'Artificial Intelligence, Machine Learning, Deep Learning',
+    sector: 'AI & Automation',
+    foundedYear: 2020,
+    teamSize: 35,
+    verified: true,
+    dpiitRegistered: 'DPIIT-88901',
+    location: 'Pune, MH',
+    deployments: 6,
+    certifications: ['ISO 27001', 'CMMI Level 2', 'AWS Certified'],
+    products: ['AI Engine Core', 'Prediction Models', 'Real-time Analytics'],
+    caseStudies: ['Traffic Management System', 'Predictive Maintenance'],
+    pilotHistoryScore: 88,
+    website: 'https://techstartuplabs.com'
+  }
+};
+
+export default function StartupProfile({ currentUser, startups = [], onNavigate }) {
+  const [st, setSt] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // 🟢 Load startup based on logged-in user's email
+    if (currentUser && currentUser.originalEmail) {
+      const userEmail = currentUser.originalEmail.toLowerCase();
+      
+      // Check if email exists in database
+      const startupData = STARTUP_DATABASE[userEmail];
+      
+      if (startupData) {
+        setSt(startupData);
+      } else {
+        // 🔴 Email not found, show "no profile" state
+        setSt(null);
+      }
+    }
+    setLoading(false);
+  }, [currentUser]);
+
+  // 🔴 Loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center mx-auto text-xl font-bold animate-spin mb-4">
+            ⚡
+          </div>
+          <p className="text-slate-600 font-semibold">Loading startup profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 🔴 No profile found for this user
+  if (!st) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <div className="gov-card p-8 text-center space-y-6 bg-amber-50 border border-amber-200">
+          <AlertCircle className="w-16 h-16 text-amber-600 mx-auto" />
+          <div>
+            <h2 className="text-2xl font-black text-amber-950 mb-2">No Startup Profile Found</h2>
+            <p className="text-sm text-amber-800 max-w-md mx-auto">
+              The email address <strong>{currentUser?.originalEmail}</strong> is not registered as a startup. 
+              Please contact the administrator to register your startup profile.
+            </p>
+          </div>
+          <div className="pt-4 flex justify-center gap-3">
+            <button 
+              onClick={() => onNavigate('startup-dashboard')}
+              className="gov-btn-primary text-xs px-4 py-2"
+            >
+              Back to Dashboard
+            </button>
+          </div>
+        </div>
+
+        {/* 🟢 DEBUG: Show available test emails */}
+        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4 text-xs">
+          <p className="font-bold text-blue-900 mb-2">Test Startup Logins (for demo):</p>
+          <ul className="text-blue-800 space-y-1 font-mono">
+            <li>• ananya@ecovision.ai / startup123 → EcoVision AI</li>
+            <li>• startup@startup.ai / startup123 → Generic Startup Inc</li>
+            <li>• sample@techstartup.com / startup123 → TechStartup Labs</li>
+          </ul>
+        </div>
+      </div>
+    );
+  }
+
+  // 🟢 Profile found - render it
+  return (
+    <div className="max-w-4xl mx-auto space-y-8 pb-16">
+      
+      {/* HEADER PROFILE CARD */}
+      <div className="gov-card p-6 sm:p-8 space-y-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 border-b border-slate-200 pb-6">
+          <div className="flex items-center gap-4">
+            <img src={st.logo} alt={st.name} className="w-16 h-16 rounded-2xl object-cover border border-slate-200 shadow-xs" />
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-black text-slate-900">{st.name}</h1>
+                <span className="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Verified Startup ✓
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">{st.dpiitRegistered} • {st.location} • Founded {st.foundedYear}</p>
+              {/* 🟢 Show logged-in user email */}
+              <p className="text-xs text-blue-600 font-semibold mt-1">
+                Logged in as: <strong>{currentUser?.originalEmail}</strong>
+              </p>
+            </div>
+          </div>
+
+          <a 
+            href={st.website} 
+            target="_blank" 
+            rel="noreferrer"
+            className="gov-btn-secondary text-xs px-4 py-2 text-blue-600 font-bold"
+          >
+            Visit Website <ExternalLink className="w-3.5 h-3.5 ml-1" />
+          </a>
+        </div>
+
+        <p className="text-xs text-slate-600 leading-relaxed font-medium">
+          {st.description}
+        </p>
+
+        {/* STATS GRID */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+          <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <span className="text-[10px] text-slate-400 block font-semibold uppercase">Proven Deployments</span>
+            <span className="text-xl font-black text-slate-900">{st.deployments} Cities</span>
+          </div>
+          <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <span className="text-[10px] text-slate-400 block font-semibold uppercase">Team Strength</span>
+            <span className="text-xl font-black text-blue-700">{st.teamSize} Engineers</span>
+          </div>
+          <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <span className="text-[10px] text-slate-400 block font-semibold uppercase">Pilot Score History</span>
+            <span className="text-xl font-black text-emerald-700">{st.pilotHistoryScore}/100</span>
+          </div>
+          <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <span className="text-[10px] text-slate-400 block font-semibold uppercase">Primary Sector</span>
+            <span className="text-sm font-bold text-slate-800">{st.sector}</span>
+          </div>
+        </div>
+
+      </div>
+
+      {/* TECH STACK & CERTIFICATIONS */}
+      <div className="grid md:grid-cols-2 gap-6">
+        
+        <div className="gov-card p-6 space-y-3">
+          <h3 className="font-bold text-slate-900 text-sm uppercase tracking-wider flex items-center gap-2">
+            <Layers className="w-4 h-4 text-blue-600" />
+            Core Technology & Products
+          </h3>
+          <p className="text-xs text-slate-600 leading-relaxed font-medium">{st.technology}</p>
+          <div className="pt-2 flex flex-wrap gap-2">
+            {st.products.map((p, idx) => (
+              <span key={idx} className="bg-blue-50 text-blue-800 text-[11px] font-bold px-2.5 py-1 rounded border border-blue-100">
+                {p}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="gov-card p-6 space-y-3">
+          <h3 className="font-bold text-slate-900 text-sm uppercase tracking-wider flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            Certifications & Compliance
+          </h3>
+          <div className="space-y-2">
+            {st.certifications.map((c, idx) => (
+              <div key={idx} className="bg-emerald-50 text-emerald-950 text-xs font-bold p-2.5 rounded-lg border border-emerald-200 flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <span>{c}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+      </div>
+
+      {/* CASE STUDIES */}
+      <div className="gov-card p-6 space-y-3">
+        <h3 className="font-bold text-slate-900 text-sm uppercase tracking-wider flex items-center gap-2">
+          <Award className="w-4 h-4 text-amber-600" />
+          Proven Case Studies
+        </h3>
+        <div className="space-y-2">
+          {st.caseStudies.map((cs, idx) => (
+            <div key={idx} className="bg-amber-50 text-amber-950 text-xs font-semibold p-3 rounded-lg border border-amber-200 flex items-center gap-2">
+              <FileText className="w-4 h-4 text-amber-600" />
+              <span>{cs}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+    </div>
+  );
+}
