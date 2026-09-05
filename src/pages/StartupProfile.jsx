@@ -14,7 +14,7 @@ import {
   Activity
 } from 'lucide-react';
 
-export default function StartupProfile({ startup, onNavigate }) {
+export default function StartupProfile({ startup, currentUser, onNavigate }) {
   const st = startup || {
     id: 'st-1',
     name: 'EcoVision AI',
@@ -42,7 +42,15 @@ export default function StartupProfile({ startup, onNavigate }) {
       <div className="gov-card p-6 sm:p-8 space-y-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 border-b border-slate-200 pb-6">
           <div className="flex items-center gap-4">
-            <img src={st.logo} alt={st.name} className="w-16 h-16 rounded-2xl object-cover border border-slate-200 shadow-xs" />
+            <img 
+              src={st.logo} 
+              alt={st.name} 
+              className="w-16 h-16 rounded-2xl object-cover border border-slate-200 shadow-xs"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(st.name)}&background=0D8ABC&color=fff`;
+              }} 
+            />
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl font-black text-slate-900">{st.name}</h1>
@@ -62,6 +70,27 @@ export default function StartupProfile({ startup, onNavigate }) {
           >
             Visit Website <ExternalLink className="w-3.5 h-3.5 ml-1" />
           </a>
+        </div>
+
+        {/* FOUNDER & LEAD DETAILS */}
+        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center border border-emerald-300 shrink-0">
+              <Users className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-[10px] text-slate-500 font-semibold uppercase">Authorized Key Person / Founder</div>
+              <div className="font-bold text-slate-900 text-sm">
+                {currentUser?.role === 'Startup' ? currentUser.name : (st.founder || 'Chief Executive Officer')}
+              </div>
+              <div className="text-slate-500 text-[11px]">
+                {currentUser?.role === 'Startup' ? `${currentUser.designation || 'Founder & CEO'} • ${currentUser.email}` : st.website}
+              </div>
+            </div>
+          </div>
+          <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-bold text-[11px] border border-blue-200">
+            DPIIT Verified Delegate
+          </span>
         </div>
 
         <p className="text-xs text-slate-600 leading-relaxed font-medium">

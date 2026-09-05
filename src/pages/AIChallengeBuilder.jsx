@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api';
 
-export default function AIChallengeBuilder({ onPublishChallenge, onNavigate }) {
+export default function AIChallengeBuilder({ onPublishChallenge, currentUser, onNavigate }) {
   const [naturalLanguageInput, setNaturalLanguageInput] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
@@ -100,7 +100,7 @@ export default function AIChallengeBuilder({ onPublishChallenge, onNavigate }) {
       eligibilityCriteria: challengeData.eligibilityCriteria,
       evaluationCriteria: challengeData.evaluationCriteria,
       status: 'Open for Proposals',
-      publishedBy: 'Rajesh Verma (MoHUA)'
+      publishedBy: currentUser?.name ? `${currentUser.name} (${currentUser.organization || 'MoHUA'})` : 'Rajesh Verma (MoHUA)'
     });
     alert('Challenge successfully published to the Public Challenge Marketplace!');
     onNavigate('marketplace');

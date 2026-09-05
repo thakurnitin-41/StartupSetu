@@ -29,6 +29,15 @@ const INITIAL_DATA = {
       avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150'
     },
     {
+      id: 'u-officer-2',
+      name: 'Sanjay Mehra',
+      email: 'sanjay.mehra@smartcities.gov.in',
+      role: 'Government Officer',
+      organization: 'Bhopal Smart City Development Corp',
+      designation: 'Superintending Engineer & Nodal Officer',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'
+    },
+    {
       id: 'u-2',
       name: 'Ananya Sharma',
       email: 'ananya@ecovision.ai',
@@ -37,6 +46,16 @@ const INITIAL_DATA = {
       designation: 'Co-Founder & CEO',
       startupId: 'st-1',
       avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150'
+    },
+    {
+      id: 'u-startup-2',
+      name: 'Priya Singh',
+      email: 'priya@smartinnovations.in',
+      role: 'Startup',
+      organization: 'Smart Innovations Pvt Ltd',
+      designation: 'Co-Founder & CTO',
+      startupId: 'st-smart-innovations',
+      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150'
     },
     {
       id: 'u-3',
@@ -94,6 +113,25 @@ const INITIAL_DATA = {
       caseStudies: ['Indore Municipal Sanitation Smart Monitoring (2023)', 'Surat Waste Fleet AI Tracking'],
       pilotHistoryScore: 92,
       website: 'https://ecovision.ai'
+    },
+    {
+      id: 'st-smart-innovations',
+      name: 'Smart Innovations Pvt Ltd',
+      logo: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=100',
+      description: 'Smart automated civic IoT telemetry and edge AI computer vision for municipal infrastructure and urban fleet governance.',
+      technology: 'Edge AI Vision, IoT Telemetry, Municipal Fleet GIS, Low-latency LoRaWAN',
+      sector: 'Smart City & GovTech',
+      foundedYear: 2022,
+      teamSize: 32,
+      verified: true,
+      dpiitRegistered: 'DPIIT-94182',
+      location: 'Jaipur, RJ',
+      deployments: 5,
+      certifications: ['ISO 27001', 'STQC Security Certified', 'CMMI Level 3'],
+      products: ['GovSense AI', 'CivicTrack IoT', 'SmartMeter Hub'],
+      caseStudies: ['Jaipur Municipal Solid Waste Automation Pilot', 'Kota Urban Telematics Stream'],
+      pilotHistoryScore: 95,
+      website: 'https://smartinnovations.in'
     },
     {
       id: 'st-2',

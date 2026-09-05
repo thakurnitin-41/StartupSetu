@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api';
 
-export default function ProcurementDecisionPack({ pilots, onNavigate }) {
+export default function ProcurementDecisionPack({ pilots, currentUser, onNavigate }) {
   const [decisionExecuted, setDecisionExecuted] = useState(null); // 'Recommended for Scale', 'Request More Evidence', 'Do Not Scale'
   const [officerNotes, setOfficerNotes] = useState(
     'Approved by Joint Secretary (Smart Cities) for scaling across 14 additional municipal corporations in Madhya Pradesh.'
@@ -39,6 +39,10 @@ export default function ProcurementDecisionPack({ pilots, onNavigate }) {
 
   const handleExecuteDecision = async (type) => {
     setDecisionExecuted(type);
+    const officerDecider = currentUser?.name 
+      ? `${currentUser.name} (${currentUser.designation || 'Authorized Officer'})` 
+      : 'Rajesh Verma (Joint Secretary)';
+
     try {
       await api.executeDecision({
         pilotId: 'pil-1',
@@ -49,7 +53,7 @@ export default function ProcurementDecisionPack({ pilots, onNavigate }) {
         overallPilotScore: 91,
         kpiAchievement: '94.2%',
         departmentName: decisionPackData.departmentName,
-        decidedBy: 'Rajesh Verma (Joint Secretary)'
+        decidedBy: officerDecider
       });
     } catch (e) {
       console.warn('Decision execution fallback:', e);

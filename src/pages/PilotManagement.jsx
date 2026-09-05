@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api';
 
-export default function PilotManagement({ pilots, onNavigate }) {
+export default function PilotManagement({ pilots, currentUser, onNavigate }) {
   const pilot = pilots && pilots.length > 0 ? pilots[0] : {
     id: 'pil-1',
     pilotNumber: 'PIL-BHP-2026-01',
@@ -49,20 +49,21 @@ export default function PilotManagement({ pilots, onNavigate }) {
   ];
 
   const handleReleasePayment = async (mId) => {
+    const officerSigner = currentUser?.name ? `${currentUser.name} (Officer Authorized)` : 'Rajesh Verma (Officer Authorized)';
     const updated = milestones.map(m => {
       if (m.id === mId) {
         return {
           ...m,
           status: 'Completed',
           releaseDate: new Date().toISOString().substring(0, 10),
-          verifiedBy: 'Rajesh Verma (Officer Authorized)'
+          verifiedBy: officerSigner
         };
       }
       return m;
     });
     setMilestones(updated);
     try {
-      await api.releaseMilestone(pilot.id || 'pil-1', mId, 'Rajesh Verma (Officer Authorized)');
+      await api.releaseMilestone(pilot.id || 'pil-1', mId, officerSigner);
     } catch (e) {
       console.warn('Milestone release fallback:', e);
     }

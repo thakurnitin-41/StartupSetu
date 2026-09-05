@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Logo from '../components/Logo';
 import { 
   Building2, 
@@ -20,12 +20,18 @@ import {
   Globe,
   Shield,
   HelpCircle,
-  Award
+  Award,
+  User
 } from 'lucide-react';
+import { api } from '../services/api';
 
 export default function LoginPage({ onLoginSuccess, onNavigate, initialMode = 'login' }) {
   const [selectedRole, setSelectedRole] = useState(null); // null = Role selection mode, object = Form mode
   const [isRegisterMode, setIsRegisterMode] = useState(false);
+  const [loginName, setLoginName] = useState('');
+  const [loginOrg, setLoginOrg] = useState('');
+  const [loginDesignation, setLoginDesignation] = useState('');
+  const [availableUsers, setAvailableUsers] = useState([]);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -39,6 +45,20 @@ export default function LoginPage({ onLoginSuccess, onNavigate, initialMode = 'l
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotSent, setForgotSent] = useState(false);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const users = await api.getUsers();
+        if (users && users.length > 0) {
+          setAvailableUsers(users);
+        }
+      } catch (e) {
+        console.warn('Could not fetch user profiles:', e);
+      }
+    };
+    fetchUsers();
+  }, []);
 
   // Security CAPTCHA State
   const [captchaCode, setCaptchaCode] = useState('7X9K2');
@@ -151,8 +171,15 @@ export default function LoginPage({ onLoginSuccess, onNavigate, initialMode = 'l
 
   const handleSelectRole = (group) => {
     setSelectedRole(group);
-    setEmail(group.email);
+    const matchedUsers = availableUsers.filter(u => u.role === group.roleName);
+    const primaryUser = matchedUsers.length > 0 ? matchedUsers[0] : null;
+
+    setLoginName(primaryUser ? primaryUser.name : (group.id === 'startup' ? 'Ananya Sharma' : group.id === 'officer' ? 'Rajesh Verma' : 'Official Delegate'));
+    setEmail(primaryUser ? primaryUser.email : group.email);
+    setLoginOrg(primaryUser ? primaryUser.organization : group.dept);
+    setLoginDesignation(primaryUser ? primaryUser.designation : (group.id === 'startup' ? 'Co-Founder & CEO' : 'Joint Secretary'));
     setPassword(group.defaultPass);
+    setRegOrg(group.dept);
     setErrorMessage('');
     generateCaptcha();
   };
@@ -160,12 +187,21 @@ export default function LoginPage({ onLoginSuccess, onNavigate, initialMode = 'l
   const handleBackToRoleSelection = () => {
     setSelectedRole(null);
     setEmail('');
+    setLoginName('');
     setPassword('');
     setErrorMessage('');
   };
 
-  const handleQuickAutofill = () => {
-    if (selectedRole) {
+  const handleQuickAutofill = (user = null) => {
+    if (user) {
+      setLoginName(user.name);
+      setEmail(user.email);
+      setLoginOrg(user.organization || '');
+      setLoginDesignation(user.designation || '');
+      setPassword(selectedRole ? selectedRole.defaultPass : 'password123');
+      setUserCaptchaInput(captchaCode);
+      setErrorMessage('');
+    } else if (selectedRole) {
       setEmail(selectedRole.email);
       setPassword(selectedRole.defaultPass);
       setUserCaptchaInput(captchaCode);
@@ -203,47 +239,55 @@ export default function LoginPage({ onLoginSuccess, onNavigate, initialMode = 'l
         setErrorMessage('Passwords do not match. Please verify your entry.');
         return;
       }
+    } else {
+      if (!loginName.trim()) {
+        setErrorMessage('Please enter your Full Name / Account Name.');
+        return;
+      }
     }
 
     setIsLoading(true);
 
     try {
-      const endpoint = isRegisterMode ? '/api/auth/register' : '/api/auth/login';
-      const bodyPayload = isRegisterMode ? {
-        name: regName,
-        email,
-        role: selectedRole?.roleName || 'Government Officer',
-        organization: regOrg || selectedRole?.dept || 'Government Department',
-        designation: regDesignation || 'Official Delegate',
-        password
-      } : {
-        email,
-        role: selectedRole?.roleName
-      };
-
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(bodyPayload)
-      });
-
-      const contentType = res.headers.get('content-type') || '';
-      if (res.ok && contentType.includes('application/json')) {
-        const data = await res.json();
-        setIsLoading(false);
-        if (data.success || data.user) {
-          onLoginSuccess(selectedRole?.roleName || 'Government Officer', email, selectedRole?.targetTab || 'gov-dashboard');
-        } else {
-          setErrorMessage(data.error || 'Authentication failed. Please check your credentials.');
-        }
+      let res;
+      if (isRegisterMode) {
+        res = await api.register({
+          name: regName.trim(),
+          email: email.trim(),
+          role: selectedRole?.roleName || 'Government Officer',
+          organization: regOrg.trim() || selectedRole?.dept || 'Government Department',
+          designation: regDesignation.trim() || (selectedRole?.roleName === 'Startup' ? 'Founder' : 'Official Delegate'),
+          password
+        });
       } else {
-        // Static hosting mode (e.g. GitHub Pages) without Node.js backend
-        setIsLoading(false);
-        onLoginSuccess(selectedRole?.roleName || 'Government Officer', email, selectedRole?.targetTab || 'gov-dashboard');
+        res = await api.login({
+          name: loginName.trim(),
+          email: email.trim(),
+          role: selectedRole?.roleName || 'Government Officer',
+          organization: loginOrg.trim() || selectedRole?.dept || 'Government Department',
+          designation: loginDesignation.trim() || 'Official Delegate',
+          password
+        });
+      }
+
+      setIsLoading(false);
+      if (res && (res.user || res.success)) {
+        onLoginSuccess(res.user, selectedRole?.targetTab || 'gov-dashboard');
+      } else {
+        setErrorMessage(res?.error || 'Authentication failed. Please check your credentials.');
       }
     } catch (err) {
       setIsLoading(false);
-      onLoginSuccess(selectedRole?.roleName || 'Government Officer', email, selectedRole?.targetTab || 'gov-dashboard');
+      const fallbackUser = {
+        id: `u-${Date.now()}`,
+        name: isRegisterMode ? regName.trim() : (loginName.trim() || 'Official Delegate'),
+        email: email.trim(),
+        role: selectedRole?.roleName || 'Government Officer',
+        organization: (isRegisterMode ? regOrg : loginOrg) || selectedRole?.dept || 'Government Department',
+        designation: (isRegisterMode ? regDesignation : loginDesignation) || 'Official Delegate',
+        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(isRegisterMode ? regName : loginName)}&background=0D8ABC&color=fff`
+      };
+      onLoginSuccess(fallbackUser, selectedRole?.targetTab || 'gov-dashboard');
     }
   };
 
@@ -473,6 +517,60 @@ export default function LoginPage({ onLoginSuccess, onNavigate, initialMode = 'l
                 </p>
               </div>
 
+              {/* Quick Profile Selection */}
+              {!isRegisterMode && availableUsers.filter(u => u.role === selectedRole.roleName).length > 0 && (
+                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                      <User className="w-3.5 h-3.5 text-blue-600" />
+                      Select Registered Profile ({selectedRole.roleName}):
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-medium">Click to populate details</span>
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-2">
+                    {availableUsers.filter(u => u.role === selectedRole.roleName).map((u) => {
+                      const isSelected = email.toLowerCase() === u.email.toLowerCase() && loginName.toLowerCase() === u.name.toLowerCase();
+                      return (
+                        <button
+                          key={u.id || u.email}
+                          type="button"
+                          onClick={() => {
+                            setLoginName(u.name);
+                            setEmail(u.email);
+                            setLoginOrg(u.organization || '');
+                            setLoginDesignation(u.designation || '');
+                            setPassword(selectedRole.defaultPass);
+                            setUserCaptchaInput(captchaCode);
+                            setErrorMessage('');
+                          }}
+                          className={`text-left p-2.5 rounded-xl border transition-all flex items-center gap-2.5 ${
+                            isSelected 
+                              ? 'bg-blue-50 border-blue-500 ring-2 ring-blue-500/20 shadow-xs' 
+                              : 'bg-white hover:bg-slate-100/80 border-slate-200'
+                          }`}
+                        >
+                          <img 
+                            src={u.avatar} 
+                            alt={u.name} 
+                            className="w-8 h-8 rounded-full object-cover border border-slate-200 shrink-0"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}&background=0D8ABC&color=fff`;
+                            }}
+                          />
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs font-extrabold text-slate-900 truncate">{u.name}</div>
+                            <div className="text-[10px] text-blue-700 font-semibold truncate">{u.organization}</div>
+                            <div className="text-[10px] text-slate-500 truncate">{u.email}</div>
+                          </div>
+                          {isSelected && <Check className="w-4 h-4 text-blue-600 shrink-0" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* Error Message Alert Box */}
               {errorMessage && (
                 <div className="bg-rose-50 border border-rose-300 p-3.5 rounded-xl flex items-center gap-2.5 text-xs font-bold text-rose-900 animate-in fade-in">
@@ -483,6 +581,29 @@ export default function LoginPage({ onLoginSuccess, onNavigate, initialMode = 'l
 
               {/* Auth Form */}
               <form onSubmit={handleSubmit} className="space-y-4">
+                
+                {/* Dynamic Full Name Field in Login Mode */}
+                {!isRegisterMode && (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-800 mb-1">
+                      Full Name / Profile Name *
+                    </label>
+                    <div className="relative">
+                      <User className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <input 
+                        type="text"
+                        required
+                        value={loginName}
+                        onChange={(e) => setLoginName(e.target.value)}
+                        placeholder="e.g. Nitin Singh"
+                        className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 font-semibold text-slate-900"
+                      />
+                    </div>
+                    <span className="text-[10px] text-slate-500 mt-1 block">
+                      Edit this name to log in dynamically as any person or official.
+                    </span>
+                  </div>
+                )}
                 
                 {/* Registration Extra Fields */}
                 {isRegisterMode && (

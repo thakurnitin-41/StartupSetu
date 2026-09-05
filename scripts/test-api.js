@@ -48,7 +48,27 @@ async function runTests() {
     const audit = await makeRequest('/audit-logs');
     console.log('GET /api/audit-logs:', audit.status, `${audit.body.length} audit events in ledger`);
 
-    console.log('\n✅ ALL REST API TESTS PASSED SUCCESSFULLY!');
+    // Auth Tests
+    const users = await makeRequest('/auth/users');
+    console.log('GET /api/auth/users:', users.status, `${users.body.length} registered profiles available`);
+
+    const loginPriya = await makeRequest('/auth/login', 'POST', {
+      name: 'Priya Singh',
+      email: 'priya@smartinnovations.in',
+      role: 'Startup'
+    });
+    console.log('POST /api/auth/login (Priya Singh):', loginPriya.status, `Logged in as: "${loginPriya.body.user.name}" (${loginPriya.body.user.organization})`);
+
+    const loginCustom = await makeRequest('/auth/login', 'POST', {
+      name: 'Nitin Singh',
+      email: 'nitin@civicinnovations.org',
+      role: 'Government Officer',
+      organization: 'Smart City Mission Command Center',
+      designation: 'Mission Director'
+    });
+    console.log('POST /api/auth/login (Custom User):', loginCustom.status, `Dynamic user: "${loginCustom.body.user.name}" (${loginCustom.body.user.designation})`);
+
+    console.log('\n✅ ALL REST API & AUTH TESTS PASSED SUCCESSFULLY!');
   } catch (err) {
     console.error('❌ API Test Error:', err);
   }

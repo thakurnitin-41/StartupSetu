@@ -15,7 +15,7 @@ import {
   Eye 
 } from 'lucide-react';
 
-export default function GovDashboard({ challenges, pilots, onNavigate, onSelectChallenge }) {
+export default function GovDashboard({ challenges, pilots, currentUser, onNavigate, onSelectChallenge }) {
   const activeChallenges = challenges ? challenges.filter(c => c.status === 'Open for Proposals' || c.status === 'Active Pilot').length : 3;
   const totalApps = challenges ? challenges.reduce((acc, c) => acc + (c.applicantCount || 0), 0) : 17;
   const activePilotsCount = pilots ? pilots.filter(p => p.status === 'Pilot Running').length : 1;
@@ -40,11 +40,13 @@ export default function GovDashboard({ challenges, pilots, onNavigate, onSelectC
         <div className="space-y-2">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-800/60 text-blue-300 text-xs font-semibold uppercase tracking-wider">
             <Building2 className="w-3.5 h-3.5" />
-            <span>Ministry of Housing & Urban Affairs (MoHUA)</span>
+            <span>{currentUser?.organization || 'Ministry of Housing & Urban Affairs (MoHUA)'}</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white">Government Officer Command Dashboard</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
+            {currentUser?.name ? `${currentUser.name} | Officer Command Dashboard` : 'Government Officer Command Dashboard'}
+          </h1>
           <p className="text-xs sm:text-sm text-slate-300">
-            Convert municipal operational problems into structured challenges, discover startups, and oversee evidence-backed pilots.
+            {currentUser?.designation ? `Authorized Officer: ${currentUser.designation} (${currentUser.email || 'Verified User'}). ` : ''}Convert municipal operational problems into structured challenges, discover startups, and oversee evidence-backed pilots.
           </p>
         </div>
 

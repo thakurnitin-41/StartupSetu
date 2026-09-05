@@ -16,23 +16,27 @@ import {
 export default function ProposalSubmission({ 
   challenges, 
   selectedChallengeId, 
+  currentUser,
   onNavigate, 
   onSubmitProposalSuccess 
 }) {
   const challenge = challenges ? (challenges.find(c => c.id === selectedChallengeId) || challenges[0]) : null;
 
+  const startupOrg = currentUser?.organization || 'EcoVision AI';
+  const founderName = currentUser?.name || 'Ananya Sharma';
+
   const [formData, setFormData] = useState({
-    solutionTitle: 'EcoVision AI TrashCam & RouteOptima Gov Telematics Suite',
-    proposedSolution: 'Integrated AI dual-camera vehicle telemetry hardware mounted on sanitation compaction trucks coupled with RouteOptima Gov cloud engine.',
-    technicalApproach: 'Deploy 250 TrashCam Edge AI units with dual 1080p cameras running onboard MobileNet V3 models to verify bin emptying and check truck fill levels.',
+    solutionTitle: `${startupOrg} Advanced GovTech Telematics Suite`,
+    proposedSolution: `Integrated AI dual-camera vehicle telemetry hardware mounted on sanitation compaction trucks coupled with ${startupOrg} cloud engine.`,
+    technicalApproach: 'Deploy 250 Edge AI units with dual 1080p cameras running onboard MobileNet V3 models to verify bin emptying and check truck fill levels.',
     implementationPlan: 'Month 1: Hardware installation. Month 2: Route GIS mapping & driver training. Months 3-5: Live telemetry field testing. Month 6: Final report.',
-    teamDetails: 'Led by Ananya Sharma (Ex-ISRO Robotics Lead) and 8 senior IoT & Computer Vision engineers.',
-    previousExperience: 'Deployed 120 units in Indore Smart City (achieved 94% route compliance) and 80 units in Surat Sanitation Fleet.',
+    teamDetails: `Led by ${founderName} (${currentUser?.designation || 'Founder & Technical Lead'}) and senior IoT & Computer Vision engineers.`,
+    previousExperience: 'Deployed municipal telemetry units across smart cities (achieved 94% route compliance) and audited sanitation fleet operations.',
     expectedOutcomes: '94% route completion rate, 97% GPS tracking uptime, missed collections reduced to 6%, fuel savings of 14.2%.',
-    pilotPlan: 'Controlled pilot covering 4 municipal zones (Zones 3, 7, 11, 14) in Bhopal, serving 450,000 citizens.',
+    pilotPlan: 'Controlled pilot covering 4 municipal zones in Bhopal, serving 450,000 citizens.',
     budget: '₹ 14,200,000',
     timeline: '6 Months',
-    attachedFiles: ['Technical_Architecture.pdf', 'STQC_Security_Certificate.pdf', 'Indore_Case_Study.pdf']
+    attachedFiles: ['Technical_Architecture.pdf', 'STQC_Security_Certificate.pdf', 'Deployment_Case_Study.pdf']
   });
 
   const [submitted, setSubmitted] = useState(false);
@@ -43,8 +47,8 @@ export default function ProposalSubmission({
     if (onSubmitProposalSuccess) {
       onSubmitProposalSuccess({
         challengeId: challenge ? challenge.id : 'ch-1',
-        startupId: 'st-1',
-        startupName: 'EcoVision AI',
+        startupId: currentUser?.startupId || 'st-1',
+        startupName: startupOrg,
         ...formData
       });
     }

@@ -6,19 +6,48 @@ const router = express.Router();
 
 // Auth Endpoints
 router.post('/auth/login', (req, res) => {
-  const { email, role } = req.body;
+  const { email, role, name, organization, designation } = req.body;
   const users = db.get('users');
-  let user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+  let user = null;
   
-  if (!user && role) {
+  if (email) {
+    user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+  }
+  
+  if (!user && name) {
+    user = users.find(u => u.name.toLowerCase() === name.toLowerCase());
+  }
+
+  const demoEmails = ['officer@mohua.gov.in', 'ananya@ecovision.ai', 'evaluator@iisc.ac.in', 'validator@qci.org.in', 'admin@startupsetu.gov.in'];
+
+  if (user && name && user.name.toLowerCase() !== name.toLowerCase() && demoEmails.includes((email || '').toLowerCase())) {
+    user = null; // Create dedicated new user record
+  }
+
+  if (!user && role && !name) {
     user = users.find(u => u.role === role);
   }
   
   if (!user) {
-    user = users[0]; // fallback
+    const safeName = name || (email ? email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Official Delegate');
+    user = db.add('users', {
+      name: safeName,
+      email: email && !demoEmails.includes(email.toLowerCase()) ? email : `${safeName.toLowerCase().replace(/\s+/g, '')}@startupsetu.gov.in`,
+      role: role || 'Government Officer',
+      organization: organization || (role === 'Startup' ? `${safeName} Innovations` : 'Department of Urban Development'),
+      designation: designation || (role === 'Startup' ? 'Founder & CEO' : 'Official Officer'),
+      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(safeName)}&background=0D8ABC&color=fff`,
+      createdAt: new Date().toISOString().substring(0, 10)
+    });
+  } else if (name && user.name !== name) {
+    user = db.update('users', user.id, { 
+      name, 
+      ...(organization ? { organization } : {}), 
+      ...(designation ? { designation } : {}) 
+    });
   }
 
-  db.logAudit(user.name, user.role, 'User Logged In', `Session initialized for ${user.email}`);
+  db.logAudit(user.name, user.role, 'User Logged In', `Session initialized for ${user.name} (${user.email})`);
   res.json({ success: true, user, token: `token_${user.id}_${Date.now()}` });
 });
 
@@ -33,21 +62,31 @@ router.post('/auth/register', (req, res) => {
 
   let user;
   if (existingUser) {
-    user = existingUser;
+    user = db.update('users', existingUser.id, {
+      name,
+      role,
+      organization: organization || existingUser.organization,
+      designation: designation || existingUser.designation
+    });
   } else {
     user = db.add('users', {
       name,
       email,
       role,
-      organization: organization || 'GovTech Portal User',
-      designation: designation || 'Official Delegate',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
+      organization: organization || (role === 'Startup' ? `${name} Technologies` : 'Government Department'),
+      designation: designation || (role === 'Startup' ? 'Founder' : 'Official Delegate'),
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
       createdAt: new Date().toISOString().substring(0, 10)
     });
   }
 
-  db.logAudit(user.name, user.role, 'User Account Registered', `New user registered with ${user.email} as ${user.role}`);
+  db.logAudit(user.name, user.role, 'User Account Registered', `New user registered with ${user.email} as ${user.name} (${user.role})`);
   res.json({ success: true, user, token: `token_${user.id}_${Date.now()}` });
+});
+
+router.get('/auth/users', (req, res) => {
+  const users = db.get('users');
+  res.json(users);
 });
 
 router.get('/auth/me', (req, res) => {

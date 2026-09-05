@@ -1,12 +1,19 @@
 import mockSeedData from './mockData.json';
 
-const STORAGE_KEY = 'startupsetu_db_v1';
+const STORAGE_KEY = 'startupsetu_db_v2';
 
 function getLocalStore() {
   try {
     const existing = localStorage.getItem(STORAGE_KEY);
     if (existing) {
-      return JSON.parse(existing);
+      const parsed = JSON.parse(existing);
+      if (!parsed.users || parsed.users.length < mockSeedData.users.length) {
+        parsed.users = mockSeedData.users;
+      }
+      if (!parsed.startups || parsed.startups.length < mockSeedData.startups.length) {
+        parsed.startups = mockSeedData.startups;
+      }
+      return parsed;
     }
   } catch (e) {
     console.warn('LocalStorage unavailable, using in-memory store:', e);
@@ -196,6 +203,91 @@ async function safeFetch(url, options = {}, fallbackGetter) {
 }
 
 export const api = {
+  async getUsers() {
+    return safeFetch('/api/auth/users', {}, () => {
+      const store = getLocalStore();
+      return store.users || [];
+    });
+  },
+
+  async login(credentials) {
+    const { email, role, name, organization, designation } = credentials;
+    return safeFetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(credentials)
+    }, () => {
+      const store = getLocalStore();
+      const demoEmails = ['officer@mohua.gov.in', 'ananya@ecovision.ai', 'evaluator@iisc.ac.in', 'validator@qci.org.in', 'admin@startupsetu.gov.in'];
+      let user = (store.users || []).find(u => u.email.toLowerCase() === (email || '').toLowerCase());
+      if (!user && name) {
+        user = (store.users || []).find(u => u.name.toLowerCase() === name.toLowerCase());
+      }
+      if (user && name && user.name.toLowerCase() !== name.toLowerCase() && demoEmails.includes((email || '').toLowerCase())) {
+        user = null; // Create distinct profile for this name
+      }
+      if (!user && role && !name) {
+        user = (store.users || []).find(u => u.role === role);
+      }
+      if (!user) {
+        const safeName = name || (email ? email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Official User');
+        user = {
+          id: `u-${Date.now()}`,
+          name: safeName,
+          email: email && !demoEmails.includes(email.toLowerCase()) ? email : `${safeName.toLowerCase().replace(/\s+/g, '')}@startupsetu.gov.in`,
+          role: role || 'Government Officer',
+          organization: organization || (role === 'Startup' ? `${safeName} Technologies` : 'Government Department'),
+          designation: designation || (role === 'Startup' ? 'Founder & CEO' : 'Official Officer'),
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(safeName)}&background=0D8ABC&color=fff`,
+          createdAt: new Date().toISOString().substring(0, 10)
+        };
+        store.users = [user, ...(store.users || [])];
+      } else if (name && user.name !== name) {
+        user.name = name;
+        if (organization) user.organization = organization;
+        if (designation) user.designation = designation;
+      }
+      logLocalAudit(store, user.name, user.role, 'User Logged In', `Session initialized for ${user.name} (${user.email})`);
+      saveLocalStore(store);
+      return { success: true, user, token: `token_${user.id}_${Date.now()}` };
+    });
+  },
+
+  async register(userData) {
+    const { name, email, role, organization, designation, password } = userData;
+    return safeFetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(userData)
+    }, () => {
+      const store = getLocalStore();
+      const existing = (store.users || []).find(u => u.email.toLowerCase() === (email || '').toLowerCase());
+      let user;
+      if (existing) {
+        existing.name = name;
+        existing.role = role;
+        if (organization) existing.organization = organization;
+        if (designation) existing.designation = designation;
+        user = existing;
+      } else {
+        user = {
+          id: `u-${Date.now()}`,
+          name,
+          email,
+          role,
+          organization: organization || (role === 'Startup' ? `${name} Technologies` : 'Government Department'),
+          designation: designation || (role === 'Startup' ? 'Founder' : 'Official Delegate'),
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=10B981&color=fff`,
+          createdAt: new Date().toISOString().substring(0, 10)
+        };
+        store.users = [user, ...(store.users || [])];
+      }
+      logLocalAudit(store, user.name, user.role, 'User Account Registered', `Registered ${user.name} (${user.email}) as ${user.role}`);
+      saveLocalStore(store);
+      return { success: true, user, token: `token_${user.id}_${Date.now()}` };
+    });
+  },
+
   async getInitialData() {
     const store = getLocalStore();
     const [challenges, startups, proposals, pilots, kpis, evidence, auditLogs, scaleItems] = await Promise.all([

@@ -24,9 +24,35 @@ import PaymentsPage from './pages/PaymentsPage';
 import { api } from './services/api';
 
 export default function App() {
-  // Start with unauthenticated state so the user lands directly on the Login Page
-  const [currentUser, setCurrentUser] = useState(null);
-  const [activeTab, setActiveTab] = useState('login');
+  // Restore authenticated session from localStorage if present
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('startupsetu_current_user');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.warn('Error restoring session from localStorage:', e);
+    }
+    return null;
+  });
+
+  const [activeTab, setActiveTab] = useState(() => {
+    try {
+      const saved = localStorage.getItem('startupsetu_current_user');
+      if (saved) {
+        const u = JSON.parse(saved);
+        const roleTabMap = {
+          'Government Officer': 'gov-dashboard',
+          'Startup': 'startup-dashboard',
+          'Evaluator': 'evaluator-dashboard',
+          'Validator': 'validator-dashboard',
+          'Admin': 'admin-dashboard'
+        };
+        return roleTabMap[u.role] || 'gov-dashboard';
+      }
+    } catch (e) {}
+    return 'login';
+  });
+
   const [showDemoModal, setShowDemoModal] = useState(false);
   const [selectedChallengeId, setSelectedChallengeId] = useState('ch-1');
 
@@ -60,8 +86,29 @@ export default function App() {
     }
   };
 
+  const handleUserLogin = (user, targetTab = null) => {
+    setCurrentUser(user);
+    try {
+      localStorage.setItem('startupsetu_current_user', JSON.stringify(user));
+    } catch (e) {
+      console.warn('Failed to persist user session:', e);
+    }
+    const defaultTabs = {
+      'Government Officer': 'gov-dashboard',
+      'Startup': 'startup-dashboard',
+      'Evaluator': 'evaluator-dashboard',
+      'Validator': 'validator-dashboard',
+      'Admin': 'admin-dashboard'
+    };
+    setActiveTab(targetTab || defaultTabs[user.role] || 'gov-dashboard');
+  };
 
-  const handleRoleChange = (newRole, email, targetTabOverride = null) => {
+  const handleRoleChange = (newRole, email, targetTabOverride = null, customUserData = null) => {
+    if (customUserData) {
+      handleUserLogin(customUserData, targetTabOverride);
+      return;
+    }
+
     const roleAvatars = {
       'Government Officer': { name: 'Rajesh Verma', email: 'officer@mohua.gov.in', org: 'Ministry of Housing & Urban Affairs', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150', defaultTab: 'gov-dashboard' },
       'Startup': { name: 'Ananya Sharma', email: 'ananya@ecovision.ai', org: 'EcoVision AI Technologies', avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150', defaultTab: 'startup-dashboard' },
@@ -71,19 +118,22 @@ export default function App() {
     };
 
     const details = roleAvatars[newRole] || roleAvatars['Government Officer'];
-    setCurrentUser({
+    const newUser = {
       id: `u-${Date.now()}`,
       role: newRole,
       name: details.name,
       email: email || details.email,
       organization: details.org,
       avatar: details.avatar
-    });
+    };
 
-    setActiveTab(targetTabOverride || details.defaultTab);
+    handleUserLogin(newUser, targetTabOverride || details.defaultTab);
   };
 
   const handleLogout = () => {
+    try {
+      localStorage.removeItem('startupsetu_current_user');
+    } catch (e) {}
     setCurrentUser(null);
     setActiveTab('login');
   };
@@ -136,7 +186,7 @@ export default function App() {
     if (activeTab === 'login' || activeTab === 'auth' || !currentUser) {
       return (
         <LoginPage 
-          onLoginSuccess={(role, email, targetTab) => handleRoleChange(role, email, targetTab)} 
+          onLoginSuccess={(user, targetTab) => handleUserLogin(user, targetTab)} 
           onNavigate={setActiveTab} 
         />
       );
@@ -187,7 +237,7 @@ export default function App() {
       case 'auth':
         return (
           <LoginPage 
-            onLoginSuccess={(role, email, targetTab) => handleRoleChange(role, email, targetTab)} 
+            onLoginSuccess={(user, targetTab) => handleUserLogin(user, targetTab)} 
             onNavigate={setActiveTab} 
           />
         );
@@ -197,6 +247,7 @@ export default function App() {
           <GovDashboard 
             challenges={challenges} 
             pilots={pilots} 
+            currentUser={currentUser}
             onNavigate={setActiveTab} 
             onSelectChallenge={setSelectedChallengeId} 
           />
@@ -207,6 +258,7 @@ export default function App() {
           <GovDashboard 
             challenges={challenges} 
             pilots={pilots} 
+            currentUser={currentUser}
             onNavigate={setActiveTab} 
             onSelectChallenge={setSelectedChallengeId} 
           />
@@ -225,7 +277,7 @@ export default function App() {
         return <AdminDashboard startups={startups} challenges={challenges} pilots={pilots} onNavigate={setActiveTab} />;
 
       case 'ai-builder':
-        return <AIChallengeBuilder onPublishChallenge={handlePublishChallenge} onNavigate={setActiveTab} />;
+        return <AIChallengeBuilder onPublishChallenge={handlePublishChallenge} currentUser={currentUser} onNavigate={setActiveTab} />;
 
       case 'marketplace':
         return (
@@ -253,6 +305,7 @@ export default function App() {
           <ProposalSubmission 
             challenges={challenges} 
             selectedChallengeId={selectedChallengeId} 
+            currentUser={currentUser}
             onNavigate={setActiveTab} 
             onSubmitProposalSuccess={handleSubmitProposal}
           />
@@ -263,19 +316,19 @@ export default function App() {
         return <EvaluatorDashboard proposals={proposals} onNavigate={setActiveTab} />;
 
       case 'pilots':
-        return <PilotManagement pilots={pilots} onNavigate={setActiveTab} />;
+        return <PilotManagement pilots={pilots} currentUser={currentUser} onNavigate={setActiveTab} />;
 
       case 'kpi-analytics':
         return <KPIDashboard pilots={pilots} kpis={kpis} onNavigate={setActiveTab} />;
 
       case 'evidence-passport':
-        return <EvidencePassport pilots={pilots} evidenceList={evidenceList} onNavigate={setActiveTab} />;
+        return <EvidencePassport pilots={pilots} evidenceList={evidenceList} currentUser={currentUser} onNavigate={setActiveTab} />;
 
       case 'validator-signoff':
         return <ValidatorDashboard pilots={pilots} evidenceList={evidenceList} onNavigate={setActiveTab} />;
 
       case 'procurement-decisions':
-        return <ProcurementDecisionPack pilots={pilots} onNavigate={setActiveTab} />;
+        return <ProcurementDecisionPack pilots={pilots} currentUser={currentUser} onNavigate={setActiveTab} />;
 
       case 'scale-engine':
         return <ScaleEngine scaleItems={scaleItems} onNavigate={setActiveTab} />;
@@ -287,11 +340,48 @@ export default function App() {
         return <AuditTrail auditLogs={auditLogs} />;
 
       case 'startups':
-      case 'startup-profile':
-        return <StartupProfile startup={startups && startups.length > 0 ? startups[0] : null} onNavigate={setActiveTab} />;
+      case 'startup-profile': {
+        const startupForUser = (currentUser?.role === 'Startup' && (
+          startups.find(s => s.id === currentUser.startupId || s.name?.toLowerCase() === (currentUser.organization || '').toLowerCase()) ||
+          {
+            id: currentUser.startupId || `st-${currentUser.id || 'custom'}`,
+            name: currentUser.organization || `${currentUser.name} Technologies`,
+            logo: currentUser.avatar || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=100',
+            description: `Innovative GovTech and civic solution platform founded by ${currentUser.name}. Specialized in government-grade municipal automation, verified telemetry, and digital public infrastructure.`,
+            technology: 'Edge AI Vision, IoT Telemetry, Cloud GIS, Real-Time Fleet Tracking',
+            sector: 'GovTech & Smart Cities',
+            foundedYear: 2022,
+            teamSize: 24,
+            verified: true,
+            dpiitRegistered: 'DPIIT-84920',
+            location: 'New Delhi, DL',
+            deployments: 4,
+            certifications: ['ISO 27001', 'STQC Certified', 'CMMI Level 3'],
+            products: ['CivicEdge Core', 'GovSense AI', 'TelemetryStream Gov'],
+            caseStudies: ['Municipal Smart Fleet Route Optimization', 'Real-time Urban Infrastructure Monitoring'],
+            pilotHistoryScore: 94,
+            website: `https://${(currentUser.organization || currentUser.name || 'startup').toLowerCase().replace(/[^a-z0-9]/g, '')}.in`
+          }
+        )) || (startups && startups.length > 0 ? startups[0] : null);
+
+        return (
+          <StartupProfile 
+            startup={startupForUser} 
+            currentUser={currentUser}
+            onNavigate={setActiveTab} 
+          />
+        );
+      }
 
       default:
-        return <GovDashboard challenges={challenges} pilots={pilots} onNavigate={setActiveTab} />;
+        return (
+          <GovDashboard 
+            challenges={challenges} 
+            pilots={pilots} 
+            currentUser={currentUser}
+            onNavigate={setActiveTab} 
+          />
+        );
     }
   };
 

@@ -1,6 +1,16 @@
 {
   "users": [
     {
+      "id": "use-1788582982783",
+      "name": "Nitin Singh",
+      "email": "nitin@civicinnovations.org",
+      "role": "Government Officer",
+      "organization": "Smart City Mission Command Center",
+      "designation": "Mission Director",
+      "avatar": "https://ui-avatars.com/api/?name=Nitin%20Singh&background=0D8ABC&color=fff",
+      "createdAt": "2026-09-05"
+    },
+    {
       "id": "use-1788519441021",
       "name": "Priya Singh",
       "email": "priya@smartinnovations.in",
@@ -1171,6 +1181,36 @@
     }
   ],
   "auditLogs": [
+    {
+      "id": "aud-1788582982784",
+      "timestamp": "2026-09-05 04:36:22",
+      "user": "Nitin Singh",
+      "role": "Government Officer",
+      "action": "User Logged In",
+      "entity": "Session initialized for Nitin Singh (nitin@civicinnovations.org)",
+      "hash": "0x00000000072102f900000000dcff5c27",
+      "status": "Recorded"
+    },
+    {
+      "id": "aud-1788582982780",
+      "timestamp": "2026-09-05 04:36:22",
+      "user": "Priya Singh",
+      "role": "Startup",
+      "action": "User Logged In",
+      "entity": "Session initialized for Priya Singh (priya@smartinnovations.in)",
+      "hash": "0x00000000003e13150000000007844f8b",
+      "status": "Recorded"
+    },
+    {
+      "id": "aud-1788582982771",
+      "timestamp": "2026-09-05 04:36:22",
+      "user": "StartupSetu AI Engine",
+      "role": "System / AI",
+      "action": "AI Startup Matching Executed",
+      "entity": "Matched 8 startups for Challenge #ch-1",
+      "hash": "0x000000000fae283b00000001e616df25",
+      "status": "Recorded"
+    },
     {
       "id": "aud-1788520106864",
       "timestamp": "2026-09-04 11:08:26",

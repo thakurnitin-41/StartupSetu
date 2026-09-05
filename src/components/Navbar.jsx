@@ -169,6 +169,10 @@ export default function Navbar({
                   src={currentUser.avatar} 
                   alt={currentUser.name} 
                   className="w-8 h-8 rounded-full ring-2 ring-blue-600/20 object-cover"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name || 'User')}&background=0D8ABC&color=fff`;
+                  }}
                 />
                 <div className="hidden lg:block text-left">
                   <div className="text-xs font-semibold text-slate-900 leading-tight">{currentUser.name}</div>
